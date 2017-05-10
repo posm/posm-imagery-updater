@@ -1,0 +1,13 @@
+{
+  "name": "posm-imagery-updater",
+  "version": "0.0.0",
+  "description": "",
+  "bin": "index.js",
+  "author": "Seth Fitzsimmons <seth@mojodna.net>",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "async": "^2.4.0",
+    "epipebomb": "^1.0.0",
+    "request": "^2.81.0"
+  }
+}
