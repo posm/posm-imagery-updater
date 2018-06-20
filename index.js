@@ -60,7 +60,7 @@ function convertTileJSON(tileJSON) {
 
 function convertSources(sources) {
   return sources.concat(whitelist).map(function(source) {
-    if (source.type !== 'tms' && source.type !== 'bing') return;
+    if (source == null || (source.type !== 'tms' && source.type !== 'bing')) return;
     if (source.id in blacklist) return;
 
     if (source.end_date) {
