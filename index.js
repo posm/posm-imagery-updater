@@ -145,7 +145,7 @@ async.parallel([
       }
 
       if (rsp.statusCode !== 200) {
-        return done();
+        return next();
       }
 
       return next(null, convertTileJSON(body));
