@@ -6,6 +6,7 @@
   "author": "Seth Fitzsimmons <seth@mojodna.net>",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "array.prototype.flatmap": "^1.2.1",
     "async": "^2.4.0",
     "epipebomb": "^1.0.0",
     "request": "^2.81.0"

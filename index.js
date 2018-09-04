@@ -7,16 +7,22 @@ var util = require('util');
 
 var async = require('async');
 require('epipebomb')();
+var flatMap = require('array.prototype.flatmap');
 var request = require('request');
+
+flatMap.shim();
 
 var POSM;
 try {
    POSM = require('/etc/posm.json');
  } catch (err) {
    POSM = {
-     posm_fqdn: 'posm.io'
+     posm_fqdn: 'posm.io',
+     webodm_fqdn: 'webodm.posm.io'
    };
  }
+
+var WEBODM_PROJECT_PATH = '/opt/data/webodm/project';
 
 // ignore imagery more than 20 years old..
 var cutoffDate = new Date();
@@ -34,7 +40,9 @@ var descriptions = {
   'MAPNIK': 'The default OpenStreetMap layer.'
 };
 
-function convertTileJSON(tileJSON) {
+function convertTileJSON(tileJSON, prefix) {
+  prefix = prefix || "";
+
   return {
     attribution: {
       text: tileJSON.attribution
@@ -54,7 +62,7 @@ function convertTileJSON(tileJSON) {
     name: tileJSON.name,
     description: tileJSON.description,
     type: "tms",
-    url: tileJSON.tiles[0]
+    url: prefix + tileJSON.tiles[0]
   }
 }
 
@@ -128,11 +136,29 @@ function convertSources(sources) {
   });
 }
 
-var localSources = fs.readdirSync('/etc/tessera.conf.d').map(function(cfg) {
-  return Object.keys(require(path.join('/etc/tessera.conf.d', cfg)));
-}).reduce(function(a, b) {
-  return a.concat(b);
-}, []);
+var localSources = [];
+
+try {
+  localSources = fs.readdirSync('/etc/tessera.conf.d').map(function(cfg) {
+    return Object.keys(require(path.join('/etc/tessera.conf.d', cfg)));
+  }).reduce(function(a, b) {
+    return a.concat(b);
+  }, []);
+} catch (err) {
+  console.warn(err.stack);
+}
+
+var webOdmTasks = [];
+
+try {
+  webOdmTasks = fs.readdirSync(WEBODM_PROJECT_PATH).flatMap(function(project) {
+    return fs.readdirSync(path.join(WEBODM_PROJECT_PATH, project, 'task')).flatMap(function(task) {
+      return path.join(project, 'tasks', task);
+    })
+  });
+} catch (err) {
+  console.warn(err.stack);
+}
 
 async.parallel([
   async.apply(async.mapLimit, localSources, 8, function(src, next) {
@@ -179,7 +205,23 @@ async.parallel([
 
       return done(null, sources);
     });
-  }
+  },
+  async.apply(async.mapLimit, webOdmTasks, 8, function(src, next) {
+    return request.get({
+      json: true,
+      uri: util.format('http://%s/api/projects/%s/orthophoto/tiles.json', POSM.webodm_fqdn, src)
+    }, function(err, rsp, body) {
+      if (err) {
+        return next(err);
+      }
+
+      if (rsp.statusCode !== 200) {
+        return next();
+      }
+
+      return next(null, convertTileJSON(body, util.format("http://%s", POSM.webodm_fqdn)));
+    });
+  }),
 ], function(err, results) {
   if (err) {
     throw err;
