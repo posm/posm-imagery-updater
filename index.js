@@ -43,6 +43,12 @@ var descriptions = {
 function convertTileJSON(tileJSON, prefix) {
   prefix = prefix || "";
 
+  var url = tileJSON.tiles[0];
+
+  if (tileJSON.scheme === "tms") {
+    url = url.replace("{y}", "{-y}");
+  }
+
   return {
     attribution: {
       text: tileJSON.attribution
@@ -62,7 +68,7 @@ function convertTileJSON(tileJSON, prefix) {
     name: tileJSON.name,
     description: tileJSON.description,
     type: "tms",
-    url: prefix + tileJSON.tiles[0]
+    url: prefix + url
   }
 }
 
