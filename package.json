@@ -1,6 +1,6 @@
 {
   "name": "@posm/posm-imagery-updater",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "",
   "bin": "index.js",
   "author": "Seth Fitzsimmons <seth@mojodna.net>",
